@@ -1,8 +1,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
 from sqlalchemy import update
+from sqlmodel import Session, select
 
 from app.database import get_session
 from app.models import Counter, Group, LogAction, now_utc
