@@ -20,6 +20,7 @@ class LogAction(StrEnum):
     counter_created = "counter_created"
     counter_renamed = "counter_renamed"
     counter_deleted = "counter_deleted"
+    counter_reset = "counter_reset"
     counter_incremented = "counter_incremented"
     counter_decremented = "counter_decremented"
 
@@ -35,6 +36,7 @@ class Group(SQLModel, table=True):
 class Counter(SQLModel, table=True):
     id: str = Field(default_factory=new_id, primary_key=True)
     group_id: str = Field(index=True, foreign_key="group.id")
+    parent_id: str | None = Field(default=None, index=True, foreign_key="counter.id")
     name: str = Field(index=True, min_length=1, max_length=80)
     value: int = 0
     created_by_name: str = Field(min_length=1, max_length=80)

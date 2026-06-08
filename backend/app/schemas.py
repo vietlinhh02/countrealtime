@@ -19,6 +19,7 @@ class GroupRename(ActorRequest):
 
 class CounterCreate(ActorRequest):
     name: str = Field(min_length=1, max_length=80)
+    parent_id: str | None = None
 
 
 class CounterRename(ActorRequest):
@@ -39,6 +40,7 @@ class GroupRead(BaseModel):
 class CounterRead(BaseModel):
     id: str
     group_id: str
+    parent_id: str | None = None
     name: str
     value: int
     created_by_name: str

@@ -36,7 +36,7 @@ async def create_group(payload: GroupCreate, session: SessionDep) -> GroupRead:
         counter_id=None,
         actor_name=payload.actor_name,
         action=LogAction.group_created,
-        message=f"{payload.actor_name.strip()} created group {group.name}",
+        message=f"{payload.actor_name.strip()} đã tạo nhóm {group.name}",
     )
     session.commit()
     session.refresh(group)
@@ -84,7 +84,7 @@ async def rename_group(
         counter_id=None,
         actor_name=payload.actor_name,
         action=LogAction.group_renamed,
-        message=f"{payload.actor_name.strip()} renamed group {old_name} to {group.name}",
+        message=f"{payload.actor_name.strip()} đã đổi tên nhóm {old_name} thành {group.name}",
     )
     session.add(group)
     session.commit()
@@ -117,7 +117,7 @@ async def delete_group(
         counter_id=None,
         actor_name=actor_name,
         action=LogAction.group_deleted,
-        message=f"{actor_name.strip()} deleted group {group_name}",
+        message=f"{actor_name.strip()} đã xóa nhóm {group_name}",
     )
     session.delete(group)
     session.commit()

@@ -28,8 +28,14 @@ async def create_counter(
     session: SessionDep,
 ) -> Counter:
     group = get_group_or_404(session, group_id)
+    parent_id = payload.parent_id
+    if parent_id:
+        parent = session.get(Counter, parent_id)
+        if parent is None or parent.group_id != group.id:
+            parent_id = None
     counter = Counter(
         group_id=group.id,
+        parent_id=parent_id,
         name=payload.name.strip(),
         created_by_name=payload.actor_name.strip(),
     )
@@ -43,7 +49,7 @@ async def create_counter(
         counter_id=counter.id,
         actor_name=payload.actor_name,
         action=LogAction.counter_created,
-        message=f"{payload.actor_name.strip()} created counter {counter.name}",
+        message=f"{payload.actor_name.strip()} đã tạo bộ đếm {counter.name}",
     )
     session.commit()
     session.refresh(counter)
@@ -77,7 +83,7 @@ async def rename_counter(
         counter_id=counter.id,
         actor_name=payload.actor_name,
         action=LogAction.counter_renamed,
-        message=f"{payload.actor_name.strip()} renamed counter {old_name} to {counter.name}",
+        message=f"{payload.actor_name.strip()} đã đổi tên bộ đếm {old_name} thành {counter.name}",
     )
     session.add(counter)
     session.commit()
@@ -112,7 +118,7 @@ async def delete_counter(
         counter_id=counter_id,
         actor_name=actor_name,
         action=LogAction.counter_deleted,
-        message=f"{actor_name.strip()} deleted counter {counter_name} (was {counter_value})",
+        message=f"{actor_name.strip()} đã xóa bộ đếm {counter_name} (giá trị {counter_value})",
     )
     session.delete(counter)
     session.commit()
@@ -144,6 +150,47 @@ async def decrement_counter(
     return await _change_counter(counter_id, payload.actor_name, -1, session)
 
 
+@router.post("/counters/{counter_id}/reset", response_model=CounterRead)
+async def reset_counter(
+    counter_id: str,
+    payload: ActorRequest,
+    session: SessionDep,
+) -> Counter:
+    counter = get_counter_or_404(session, counter_id)
+    group = session.get(Group, counter.group_id)
+    old_value = counter.value
+    now = now_utc()
+    if group is not None:
+        group.updated_at = now
+        session.add(group)
+    session.exec(
+        update(Counter)
+        .where(Counter.id == counter_id)
+        .values(value=0, updated_at=now)
+    )
+    log = write_log(
+        session,
+        group_id=counter.group_id,
+        counter_id=counter.id,
+        actor_name=payload.actor_name,
+        action=LogAction.counter_reset,
+        old_value=old_value,
+        new_value=0,
+        delta=-old_value,
+        message=f"{payload.actor_name.strip()} đã reset {counter.name} từ {old_value} về 0",
+    )
+    session.commit()
+    session.refresh(counter)
+    session.refresh(log)
+    event = {
+        "type": "counter_updated",
+        "counter": CounterRead.model_validate(counter).model_dump(mode="json"),
+        "log": LogRead.model_validate(log).model_dump(mode="json"),
+    }
+    await hub.broadcast(event)
+    return counter
+
+
 async def _change_counter(
     counter_id: str,
     actor_name: str,
@@ -155,7 +202,7 @@ async def _change_counter(
     old_value = counter.value
     new_value = old_value + delta
     action = LogAction.counter_incremented if delta > 0 else LogAction.counter_decremented
-    verb = "increased" if delta > 0 else "decreased"
+    verb = "tăng" if delta > 0 else "giảm"
     now = now_utc()
     if group is not None:
         group.updated_at = now
@@ -174,7 +221,7 @@ async def _change_counter(
         old_value=old_value,
         new_value=new_value,
         delta=delta,
-        message=f"{actor_name.strip()} {verb} {counter.name} to {new_value}",
+        message=f"{actor_name.strip()} đã {verb} {counter.name} lên {new_value}",
     )
     session.commit()
     session.refresh(counter)

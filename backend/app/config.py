@@ -7,6 +7,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./countrealtime.db"
     allowed_origins: str = Field(default="*")
+    admin_password: str = Field(default="admin123")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
