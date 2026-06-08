@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #f9f7f3;
+  --surface-bone: #f3f0e8;
+  --surface-card: #ffffff;
+  --surface-dark: #202020;
+  --surface-deep: #000000;
+  --primary: #202020;
+  --primary-deep: #000000;
+  --on-primary: #ffffff;
+  --ink: #202020;
+  --body: #3a3a3a;
+  --charcoal: #575757;
+  --mute: #646464;
+  --ash: #8d8d8d;
+  --stone: #bbbbbb;
+  --hairline: rgba(32, 32, 32, 0.12);
+  --hairline-strong: #202020;
+  --on-dark: #fcfcfc;
+  --on-dark-mute: rgba(252, 252, 252, 0.72);
+  --badge-success: #2b9a66;
+  --hero-glow: #ff6a3d;
+  --hero-pink: #f4a8a0;
+  --ring-focus: rgba(59, 130, 246, 0.5);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface-bone: var(--surface-bone);
+  --color-surface-card: var(--surface-card);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-deep: var(--surface-deep);
+  --color-primary: var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-on-primary: var(--on-primary);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-charcoal: var(--charcoal);
+  --color-mute: var(--mute);
+  --color-ash: var(--ash);
+  --color-stone: var(--stone);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-mute: var(--on-dark-mute);
+  --color-badge-success: var(--badge-success);
+  --color-hero-glow: var(--hero-glow);
+  --color-hero-pink: var(--hero-pink);
+  --color-ring-focus: var(--ring-focus);
+  --font-sans: var(--font-google-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-google-sans), ui-sans-serif, system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+input {
+  font-size: 16px;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-in {
+  animation: sheet-in 160ms ease-out;
+}
+
+.animate-item-in {
+  animation: item-in 140ms ease-out;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
