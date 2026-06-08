@@ -9,7 +9,7 @@ on:
     paths: [backend/**]
 
 jobs:
-  lint-and-test:
+  lint-test-build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,3 +32,6 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+      - name: Build Docker image
+        run: docker build -t countrealtime-backend .
