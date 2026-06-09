@@ -2,7 +2,7 @@ import type { Counter, CounterLog, Group, GroupDetail } from "@/app/lib/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-type Body = Record<string, string | number>;
+type Body = Record<string, string | number | null>;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
