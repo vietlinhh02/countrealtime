@@ -136,48 +136,87 @@ export function CounterCard({
               readOnly={selectMode}
             />
             {!selectMode ? (
-              <DropdownMenu
-                align="right"
-                trigger={
+              compact ? (
+                <DropdownMenu
+                  align="right"
+                  trigger={
+                    <button
+                      className="rounded-full p-1 text-[var(--stone)] hover:bg-[var(--surface-bone)] hover:text-[var(--ink)]"
+                      type="button"
+                    >
+                      <DotsThree size={14} weight="bold" />
+                    </button>
+                  }
+                  items={[
+                    {
+                      icon: <Clock size={14} weight="bold" />,
+                      label: "Nhật ký",
+                      onClick: openLogs,
+                    },
+                    ...(!counter.parent_id
+                      ? [
+                          {
+                            icon: <TreeStructure size={14} weight="bold" />,
+                            label: "Tạo con",
+                            onClick: () => setShowCreateSub(true),
+                          },
+                        ]
+                      : []),
+                    ...(isAdmin
+                      ? [
+                          {
+                            icon: <ArrowCounterClockwise size={14} weight="bold" />,
+                            label: "Đặt lại",
+                            onClick: () => onReset(counter.id),
+                          },
+                          {
+                            icon: <Trash size={14} weight="bold" />,
+                            label: "Xóa",
+                            onClick: () => setShowDelete(true),
+                            variant: "danger" as const,
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              ) : (
+                <div className="flex shrink-0 items-center gap-0.5">
                   <button
-                    className={`rounded-full text-[var(--stone)] hover:bg-[var(--surface-bone)] hover:text-[var(--ink)] ${compact ? "p-1" : "p-1.5"}`}
+                    className="rounded-full p-1.5 text-[var(--stone)] hover:bg-[var(--surface-bone)] hover:text-[var(--ink)]"
+                    onClick={(e) => { e.stopPropagation(); openLogs(); }}
                     type="button"
                   >
-                    <DotsThree size={compact ? 14 : 16} weight="bold" />
+                    <Clock size={14} weight="bold" />
                   </button>
-                }
-                items={[
-                  {
-                    icon: <Clock size={14} weight="bold" />,
-                    label: "Nhật ký",
-                    onClick: openLogs,
-                  },
-                  ...(!counter.parent_id
-                    ? [
-                        {
-                          icon: <TreeStructure size={14} weight="bold" />,
-                          label: "Tạo con",
-                          onClick: () => setShowCreateSub(true),
-                        },
-                      ]
-                    : []),
-                  ...(isAdmin
-                    ? [
-                        {
-                          icon: <ArrowCounterClockwise size={14} weight="bold" />,
-                          label: "Đặt lại",
-                          onClick: () => onReset(counter.id),
-                        },
-                        {
-                          icon: <Trash size={14} weight="bold" />,
-                          label: "Xóa",
-                          onClick: () => setShowDelete(true),
-                          variant: "danger" as const,
-                        },
-                      ]
-                    : []),
-                ]}
-              />
+                  {counter.parent_id ? null : (
+                    <button
+                      className="rounded-full p-1.5 text-[var(--stone)] hover:bg-[var(--surface-bone)] hover:text-[var(--ink)]"
+                      onClick={(e) => { e.stopPropagation(); setShowCreateSub(true); }}
+                      type="button"
+                    >
+                      <TreeStructure size={14} weight="bold" />
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <>
+                      <button
+                        className="rounded-full p-1.5 text-[var(--stone)] hover:bg-orange-50 hover:text-orange-600"
+                        onClick={(e) => { e.stopPropagation(); onReset(counter.id); }}
+                        type="button"
+                      >
+                        <ArrowCounterClockwise size={14} weight="bold" />
+                      </button>
+                      <button
+                        className="rounded-full p-1.5 text-[var(--stone)] hover:bg-red-50 hover:text-red-600"
+                        onClick={(e) => { e.stopPropagation(); setShowDelete(true); }}
+                        type="button"
+                      >
+                        <Trash size={14} weight="bold" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )
             ) : null}
           </div>
           <div className={`font-mono font-bold leading-none tabular-nums -tracking-[0.5px] text-[var(--ink)] ${
