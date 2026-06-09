@@ -149,8 +149,12 @@ export function CounterApp() {
       const group = await api.createGroup("Nhóm 1", name);
       setGroups([group]);
       setSelectedGroupId(group.id);
-      const counter = await api.createCounter(group.id, "Bộ đếm 1", name);
-      setCounters([counter]);
+      const created = await Promise.all(
+        Array.from({ length: 30 }, (_, i) =>
+          api.createCounter(group.id, `Q${String(i + 1).padStart(2, "0")}`, name),
+        ),
+      );
+      setCounters(created);
     } catch (nextError: unknown) {
       setError(String(nextError));
     }
@@ -271,16 +275,18 @@ export function CounterApp() {
             >
               <SignOut size={14} weight="bold" />
             </Button>
-            <Button
-              aria-label="Reset phiên"
-              onClick={() => setModal("reset-session")}
-              size="icon"
-              type="button"
-              variant="ghost"
-              className="h-8 w-8"
-            >
-              <ArrowClockwise size={14} weight="bold" />
-            </Button>
+            {isAdmin ? (
+              <Button
+                aria-label="Reset phiên"
+                onClick={() => setModal("reset-session")}
+                size="icon"
+                type="button"
+                variant="ghost"
+                className="h-8 w-8"
+              >
+                <ArrowClockwise size={14} weight="bold" />
+              </Button>
+            ) : null}
           </div>
         </div>
         {error ? (
