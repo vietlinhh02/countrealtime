@@ -81,8 +81,13 @@ export function CounterBoard({
 
   const allSelected = counters.length > 0 && selectedIds.size === counters.length;
 
-  const rootCounters = counters.filter((c) => !c.parent_id);
-  const childrenOf = (parentId: string) => counters.filter((c) => c.parent_id === parentId);
+  const rootCounters = counters
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  const childrenOf = (parentId: string) =>
+    counters
+      .filter((c) => c.parent_id === parentId)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
   const renderCounter = (counter: Counter, compact = false) => {
     const children = childrenOf(counter.id);
