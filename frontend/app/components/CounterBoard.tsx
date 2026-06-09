@@ -205,7 +205,7 @@ export function CounterBoard({
 
       {viewMode === "grid" ? (
         <div className={`grid gap-2 ${COL_CLASS[gridCols]}`}>
-          {rootCounters.map((counter) => renderCounter(counter))}
+          {rootCounters.map((counter) => renderCounter(counter, gridCols >= 2))}
         </div>
       ) : (
         <div className="space-y-2.5">
