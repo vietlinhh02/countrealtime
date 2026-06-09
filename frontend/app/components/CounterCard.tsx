@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { ArrowCounterClockwise, Clock, Minus, Plus, Trash, TreeStructure, User, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Clock, DotsThree, Minus, Plus, Trash, TreeStructure, User, X } from "@phosphor-icons/react";
 import type { Counter, CounterLog } from "@/app/lib/types";
 import { Button } from "@/app/components/ui/button";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
+import { DropdownMenu } from "@/app/components/ui/dropdown-menu";
 import { api } from "@/app/lib/api";
 import { actionLabel, formatTime } from "@/app/lib/format";
 
@@ -124,7 +125,7 @@ export function CounterCard({
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--mute)]" />
             ) : null}
             <input
-              className={`min-w-0 flex-1 bg-transparent outline-none text-[var(--ink)] ${
+              className={`min-w-0 flex-1 truncate bg-transparent outline-none text-[var(--ink)] ${
                 compact ? "text-[13px] font-medium" : "text-[15px] font-semibold"
               }`}
               defaultValue={counter.name}
@@ -135,42 +136,48 @@ export function CounterCard({
               readOnly={selectMode}
             />
             {!selectMode ? (
-              <div className="flex shrink-0 items-center gap-0.5">
-                <button
-                  className={`rounded-full text-[var(--stone)] hover:bg-[var(--surface-bone)] hover:text-[var(--ink)] ${compact ? "p-1" : "p-1.5"}`}
-                  onClick={(e) => { e.stopPropagation(); openLogs(); }}
-                  type="button"
-                >
-                  <Clock size={compact ? 12 : 14} weight="bold" />
-                </button>
-                {counter.parent_id ? null : (
+              <DropdownMenu
+                align="right"
+                trigger={
                   <button
                     className={`rounded-full text-[var(--stone)] hover:bg-[var(--surface-bone)] hover:text-[var(--ink)] ${compact ? "p-1" : "p-1.5"}`}
-                    onClick={(e) => { e.stopPropagation(); setShowCreateSub(true); }}
                     type="button"
                   >
-                    <TreeStructure size={compact ? 12 : 14} weight="bold" />
+                    <DotsThree size={compact ? 14 : 16} weight="bold" />
                   </button>
-                )}
-                {isAdmin && (
-                  <>
-                    <button
-                      className={`rounded-full text-[var(--stone)] hover:bg-orange-50 hover:text-orange-600 ${compact ? "p-1" : "p-1.5"}`}
-                      onClick={(e) => { e.stopPropagation(); onReset(counter.id); }}
-                      type="button"
-                    >
-                      <ArrowCounterClockwise size={compact ? 12 : 14} weight="bold" />
-                    </button>
-                    <button
-                      className={`rounded-full text-[var(--stone)] hover:bg-red-50 hover:text-red-600 ${compact ? "p-1" : "p-1.5"}`}
-                      onClick={(e) => { e.stopPropagation(); setShowDelete(true); }}
-                      type="button"
-                    >
-                      <Trash size={compact ? 12 : 14} weight="bold" />
-                    </button>
-                  </>
-                )}
-              </div>
+                }
+                items={[
+                  {
+                    icon: <Clock size={14} weight="bold" />,
+                    label: "Nhật ký",
+                    onClick: openLogs,
+                  },
+                  ...(!counter.parent_id
+                    ? [
+                        {
+                          icon: <TreeStructure size={14} weight="bold" />,
+                          label: "Tạo con",
+                          onClick: () => setShowCreateSub(true),
+                        },
+                      ]
+                    : []),
+                  ...(isAdmin
+                    ? [
+                        {
+                          icon: <ArrowCounterClockwise size={14} weight="bold" />,
+                          label: "Đặt lại",
+                          onClick: () => onReset(counter.id),
+                        },
+                        {
+                          icon: <Trash size={14} weight="bold" />,
+                          label: "Xóa",
+                          onClick: () => setShowDelete(true),
+                          variant: "danger" as const,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
             ) : null}
           </div>
           <div className={`font-mono font-bold leading-none tabular-nums -tracking-[0.5px] text-[var(--ink)] ${
