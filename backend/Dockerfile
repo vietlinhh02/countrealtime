@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV UV_SYSTEM_PYTHON=1
 ENV DATABASE_URL=sqlite:////data/app.db
+ENV PORT=8000
 
 WORKDIR /app
 
@@ -16,6 +17,6 @@ COPY app ./app
 
 RUN mkdir -p /data
 
-EXPOSE 8000
+EXPOSE ${PORT}
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
