@@ -22,6 +22,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith("/api") || url.pathname.startsWith("/groups") || url.pathname.startsWith("/counters") || url.pathname.startsWith("/health") || url.pathname.startsWith("/auth") || url.pathname.startsWith("/ws")) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
