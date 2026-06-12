@@ -9,7 +9,7 @@ services:
       - backend-data:/data
     environment:
       - DATABASE_URL=sqlite:////data/app.db
-      - ALLOWED_ORIGINS=*
+      - ALLOWED_ORIGINS=https://count.aaisee.me,https://couting.aaisee.me,http://localhost:3000
 
   frontend:
     build:

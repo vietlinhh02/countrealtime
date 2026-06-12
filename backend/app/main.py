@@ -4,11 +4,40 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from app.config import settings
 from app.database import create_db_and_tables
 from app.realtime import hub
 from app.routes import counters, groups, logs
+
+
+class EnsureCORSMiddleware(BaseHTTPMiddleware):
+    """Guarantee CORS headers on every response — even from reverse proxies."""
+
+    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+        response = await call_next(request)
+        response.headers.setdefault("access-control-allow-origin", "*")
+        response.headers.setdefault("access-control-allow-methods", "*")
+        response.headers.setdefault("access-control-allow-headers", "*")
+        response.headers.setdefault("access-control-max-age", "86400")
+        return response
+
+
+class HandleOPTIONSMiddleware(BaseHTTPMiddleware):
+    """Intercept OPTIONS preflight before anything else rejects it."""
+
+    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+        if request.method == "OPTIONS":
+            response = Response(status_code=204)
+            response.headers["access-control-allow-origin"] = "*"
+            response.headers["access-control-allow-methods"] = "*"
+            response.headers["access-control-allow-headers"] = "*"
+            response.headers["access-control-max-age"] = "86400"
+            return response
+        return await call_next(request)
 
 
 @asynccontextmanager
@@ -19,13 +48,15 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
 
 app = FastAPI(title="Count Realtime API", version="0.1.0", lifespan=lifespan)
 
+app.add_middleware(HandleOPTIONSMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(EnsureCORSMiddleware)
 
 app.include_router(groups.router)
 app.include_router(counters.router)
