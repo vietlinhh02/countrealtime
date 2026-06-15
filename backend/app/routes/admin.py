@@ -78,13 +78,17 @@ async def reset_session(payload: ResetSessionRequest, session: SessionDep) -> Re
     session.flush()
 
     # 5. Single log entry summarising the reset.
+    reset_message = (
+        f"{actor} đã reset phiên: xóa {len(existing_group_ids)} nhóm cũ, "
+        "tạo nhóm mới với 30 bộ đếm"
+    )
     log = write_log(
         session,
         group_id=group.id,
         counter_id=None,
         actor_name=actor,
         action=LogAction.group_created,
-        message=f"{actor} đã reset phiên: xóa {len(existing_group_ids)} nhóm cũ, tạo nhóm mới với 30 bộ đếm",
+        message=reset_message,
     )
     session.add(log)
     session.commit()
