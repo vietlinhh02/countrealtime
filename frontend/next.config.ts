@@ -30,14 +30,10 @@ const nextConfig: NextConfig = {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   },
 
-  // Tells Next dev server to use the on-disk source every time and skip the
-  // in-memory incremental cache.
-  webpack: (config, { dev }) => {
-    if (dev) {
-      config.cache = false;
-    }
-    return config;
-  },
+  // Next.js 16 enables Turbopack by default. We don't need a custom
+  // bundler config — the empty `turbopack: {}` object is the documented way
+  // to opt in to Turbopack without surprises.
+  turbopack: {},
 };
 
 export default nextConfig;
