@@ -1,27 +1,53 @@
+# Coolify / Docker Compose deploy file.
+# Both images are pre-built and pushed to GitHub Container Registry by CI.
+# Coolify can either:
+#   (a) just pull & run these images (no local build needed), or
+#   (b) build them locally from the Dockerfiles in this repo.
+# Default below is (a). Switch to (b) by replacing `image:` with `build:`.
+
+x-backend-env: &backend-env
+  DATABASE_URL: sqlite:////data/app.db
+  # Comma-separated origin list. Coolify sets these via the UI.
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:-SuperAdmin2026}
+
 services:
   backend:
-    build: ./backend
+    image: ghcr.io/${GITHUB_REPOSITORY:-vietlinhh02/countrealtime}/backend:latest
+    # Fallback to local build when the image is not yet available, e.g. in CI
+    # or on a fresh server before the first push to GHCR.
+    build:
+      context: ./backend
     container_name: countrealtime-backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - backend-data:/data
     environment:
-      - DATABASE_URL=sqlite:////data/app.db
-      - ALLOWED_ORIGINS=https://count.aaisee.me,https://couting.aaisee.me,http://localhost:3000
+      <<: *backend-env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-vietlinhh02/countrealtime}/frontend:latest
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+        # Override at deploy time so the browser hits the public backend URL,
+        # not the internal container DNS.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
     container_name: countrealtime-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   backend-data:
