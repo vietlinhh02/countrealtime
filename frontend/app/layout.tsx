@@ -63,7 +63,9 @@ export default function RootLayout({
         {children}
         <script
           dangerouslySetInnerHTML={{
-            __html: `if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js")})}`,
+            // Cache disabled: explicitly unregister any service worker the user
+            // may have installed from a previous build.
+            __html: `if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then((rs)=>rs.forEach((r)=>r.unregister()));}`,
           }}
         />
       </body>

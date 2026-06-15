@@ -11,11 +11,15 @@ from starlette.responses import Response
 from app.config import settings
 from app.database import create_db_and_tables
 from app.realtime import hub
-from app.routes import counters, groups, logs
+from app.routes import admin, counters, groups, logs
 
 
 class EnsureCORSMiddleware(BaseHTTPMiddleware):
-    """Guarantee CORS headers on every response — even from reverse proxies."""
+    """Guarantee CORS headers on every response — even from reverse proxies.
+
+    Also stamps no-cache headers on every response so neither the browser nor
+    any intermediate cache (Caddy, Cloudflare, …) can serve stale data.
+    """
 
     async def dispatch(self, request: Request, call_next):  # type: ignore[override]
         response = await call_next(request)
@@ -23,6 +27,13 @@ class EnsureCORSMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("access-control-allow-methods", "*")
         response.headers.setdefault("access-control-allow-headers", "*")
         response.headers.setdefault("access-control-max-age", "86400")
+        response.headers.setdefault(
+            "cache-control",
+            "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        )
+        response.headers.setdefault("pragma", "no-cache")
+        response.headers.setdefault("expires", "0")
+        response.headers.setdefault("surrogate-control", "no-store")
         return response
 
 
@@ -36,6 +47,9 @@ class HandleOPTIONSMiddleware(BaseHTTPMiddleware):
             response.headers["access-control-allow-methods"] = "*"
             response.headers["access-control-allow-headers"] = "*"
             response.headers["access-control-max-age"] = "86400"
+            response.headers["cache-control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["pragma"] = "no-cache"
+            response.headers["expires"] = "0"
             return response
         return await call_next(request)
 
@@ -61,6 +75,7 @@ app.add_middleware(EnsureCORSMiddleware)
 app.include_router(groups.router)
 app.include_router(counters.router)
 app.include_router(logs.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")

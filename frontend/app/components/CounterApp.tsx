@@ -15,6 +15,7 @@ import { RealtimeStatus, useRealtime } from "@/app/lib/useRealtime";
 const NAME_KEY = "countrealtime.name";
 const GROUP_KEY = "countrealtime.selectedGroupId";
 const ADMIN_KEY = "countrealtime.isAdmin";
+const ADMIN_PASSWORD_KEY = "countrealtime.adminPassword";
 type ModalState = "create-group" | "rename-group" | "create-counter" | "reset-session" | "delete-group" | null;
 
 export function CounterApp() {
@@ -27,6 +28,7 @@ export function CounterApp() {
   const [modal, setModal] = useState<ModalState>(null);
   const [error, setError] = useState("");
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("closed");
+  const [isResetting, setIsResetting] = useState(false);
 
   const selectedGroup = useMemo(
     () => groups.find((group) => group.id === selectedGroupId) ?? null,
@@ -85,6 +87,14 @@ export function CounterApp() {
       const group = event.group;
       const counter = event.counter;
 
+      if (event.type === "session_reset") {
+        // Server wiped state for everyone; clear local selection so the next
+        // loadGroups() picks the new default group.
+        setSelectedGroupId(null);
+        setCounters([]);
+        syncCurrentGroup();
+        return;
+      }
       if (event.type === "group_deleted" && event.group_id) {
         setGroups((current) => current.filter((g) => g.id !== event.group_id));
         if (selectedGroupId === event.group_id) {
@@ -111,9 +121,14 @@ export function CounterApp() {
     },
   );
 
-  const saveName = (name: string, admin: boolean) => {
+  const saveName = (name: string, admin: boolean, password = "") => {
     localStorage.setItem(NAME_KEY, name);
     localStorage.setItem(ADMIN_KEY, String(admin));
+    if (admin && password) {
+      localStorage.setItem(ADMIN_PASSWORD_KEY, password);
+    } else if (!admin) {
+      localStorage.removeItem(ADMIN_PASSWORD_KEY);
+    }
     setActorName(name);
     setIsAdmin(admin);
   };
@@ -121,6 +136,7 @@ export function CounterApp() {
   const logout = () => {
     localStorage.removeItem(NAME_KEY);
     localStorage.removeItem(ADMIN_KEY);
+    localStorage.removeItem(ADMIN_PASSWORD_KEY);
     localStorage.removeItem(GROUP_KEY);
     setActorName("");
     setIsAdmin(false);
@@ -130,36 +146,30 @@ export function CounterApp() {
   };
 
   const clearName = async () => {
-    const name = actorName;
-    for (const group of groups) {
-      try {
-        await api.deleteGroup(group.id, name);
-      } catch {
-        // ignore
-      }
+    if (isResetting) {
+      return;
     }
-    localStorage.removeItem(NAME_KEY);
-    localStorage.removeItem(GROUP_KEY);
-    setActorName("");
-    setGroups([]);
-    setSelectedGroupId(null);
-    setCounters([]);
+    const name = actorName.trim();
+    const password = localStorage.getItem(ADMIN_PASSWORD_KEY) ?? "";
+    if (!name || !password) {
+      setError("Thiếu mật khẩu admin để reset phiên");
+      return;
+    }
+    setIsResetting(true);
+    setError("");
     setModal(null);
     try {
-      const group = await api.createGroup("Nhóm 1", name);
-      setGroups([group]);
-      setSelectedGroupId(group.id);
-      const created = await Promise.all(
-        Array.from({ length: 30 }, (_, i) =>
-          api.createCounter(group.id, `Q${String(i + 1).padStart(2, "0")}`, name),
-        ),
-      );
-      setCounters(created);
-    } catch (nextError: unknown) {
-      setError(String(nextError));
+      // Single atomic round-trip: server wipes DB and creates default group + 30 counters.
+      const result = await api.resetSession(name, password);
+      setGroups([result.group]);
+      setSelectedGroupId(result.group.id);
+      setCounters(result.counters);
+      localStorage.setItem(GROUP_KEY, result.group.id);
+    } catch (nextError) {
+      setError(`Reset thất bại: ${(nextError as Error).message}`);
+    } finally {
+      setIsResetting(false);
     }
-    setActorName(name);
-    localStorage.setItem(NAME_KEY, name);
   };
 
   const createGroup = async (name: string) => {
@@ -278,13 +288,18 @@ export function CounterApp() {
             {isAdmin ? (
               <Button
                 aria-label="Reset phiên"
+                disabled={isResetting}
                 onClick={() => setModal("reset-session")}
                 size="icon"
                 type="button"
                 variant="ghost"
                 className="h-8 w-8"
               >
-                <ArrowClockwise size={14} weight="bold" />
+                <ArrowClockwise
+                  className={isResetting ? "animate-spin" : undefined}
+                  size={14}
+                  weight="bold"
+                />
               </Button>
             ) : null}
           </div>
@@ -356,11 +371,20 @@ export function CounterApp() {
               Xóa toàn bộ dữ liệu trên server và tạo lại nhóm mặc định.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-2">
-              <Button onClick={() => setModal(null)} type="button" variant="muted">
+              <Button
+                disabled={isResetting}
+                onClick={() => setModal(null)}
+                type="button"
+                variant="muted"
+              >
                 Hủy
               </Button>
-              <Button onClick={clearName} type="button">
-                Reset
+              <Button
+                disabled={isResetting}
+                onClick={clearName}
+                type="button"
+              >
+                {isResetting ? "Đang reset..." : "Reset"}
               </Button>
             </div>
           </DialogContent>

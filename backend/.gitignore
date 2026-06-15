@@ -27,3 +27,10 @@ venv/
 # Tools
 .ruff_cache/
 .pytest_cache/
+
+# Cache artefacts (intentionally never committed)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/

@@ -1,17 +1,32 @@
 import type { Counter, CounterLog, Group, GroupDetail } from "@/app/lib/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const DEFAULT_TIMEOUT_MS = 15000;
 
 type Body = Record<string, string | number | null>;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`Request to ${path} timed out after ${DEFAULT_TIMEOUT_MS}ms`);
+    }
+    throw new Error(`Network error contacting ${path}: ${(error as Error).message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const message = await response.text();
@@ -79,6 +94,11 @@ export const api = {
     request<Counter>(`/counters/${counterId}/reset`, {
       method: "POST",
       body: body({ actor_name: actorName }),
+    }),
+  resetSession: (actorName: string, password: string) =>
+    request<{ group: Group; counters: Counter[] }>(`/admin/reset-session`, {
+      method: "POST",
+      body: body({ actor_name: actorName, password }),
     }),
   listLogs: (groupId: string, offset = 0, limit = 20) =>
     request<CounterLog[]>(`/groups/${groupId}/logs?offset=${offset}&limit=${limit}`),

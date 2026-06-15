@@ -1,0 +1,28 @@
+# Cache directories — must NEVER be sent to the build context.
+.venv
+__pycache__
+*.py[cod]
+*$py.class
+.eggs
+dist
+build
+.pytest_cache
+.ruff_cache
+*.db
+*.sqlite3
+*.egg-info
+
+# VCS / env
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.DS_Store
+.vscode
+.idea
+
+# Logs
+*.log

@@ -1,0 +1,27 @@
+# Cache directories — must NEVER be sent to the build context.
+.next
+.swc
+out
+build
+dist
+node_modules/.cache
+.tsbuildinfo
+*.tsbuildinfo
+
+# VCS / env
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.DS_Store
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*

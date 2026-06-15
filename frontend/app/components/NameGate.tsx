@@ -6,7 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { api } from "@/app/lib/api";
 
 type Props = {
-  onSubmit: (name: string, isAdmin: boolean) => void;
+  onSubmit: (name: string, isAdmin: boolean, password?: string) => void;
 };
 
 export function NameGate({ onSubmit }: Props) {
@@ -32,7 +32,7 @@ export function NameGate({ onSubmit }: Props) {
           setLoading(false);
           return;
         }
-        onSubmit(nextName, true);
+        onSubmit(nextName, true, password.trim());
       } else {
         onSubmit(nextName, false);
       }

@@ -31,3 +31,11 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Cache artefacts (intentionally never committed)
+.next/cache/
+.swc/
+.tsbuildinfo
+*.tsbuildinfo
+node_modules/.cache/
+.eslintcache
